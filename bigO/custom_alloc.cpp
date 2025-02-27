@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <mutex>
 #include <time.h>
 #include <unordered_map>
 
@@ -50,7 +51,22 @@ private:
 static MemoryStatistics stats;
 
 // Track object sizes
-static std::unordered_map<void *, size_t> objSizes;
+class SizeTracker {
+public:
+  void setSize(void * ptr, size_t sz) {
+    std::lock_guard<std::mutex> lk(_objSizesLock);
+    _objSizes[ptr] = sz;
+  }
+  size_t getSize(void * ptr) {
+    std::lock_guard<std::mutex> lk(_objSizesLock);
+    return _objSizes[ptr];
+  }
+private:  
+  std::unordered_map<void *, size_t> _objSizes;
+  std::mutex _objSizesLock;
+};
+
+SizeTracker objSizes;
 
 // Function declarations
 void custom_free(void *ctx, void *ptr);
@@ -73,7 +89,7 @@ static PyMemAllocatorEx alloc = {
 // Custom malloc implementation
 void *custom_malloc(void *ctx, size_t size) {
   auto * ptr = origAlloc.malloc(ctx, size);
-  objSizes[ptr] = size;
+  objSizes.setSize(ptr, size);
   stats.allocate(size);
   return ptr;
 }
@@ -82,7 +98,7 @@ void *custom_malloc(void *ctx, size_t size) {
 void *custom_calloc(void *ctx, size_t nelem, size_t elsize) {
   auto size = nelem * elsize;
   auto * ptr = origAlloc.calloc(ctx, size, 1);
-  objSizes[ptr] = size;
+  objSizes.setSize(ptr, size);
   stats.allocate(size);
   return ptr;
 }
@@ -96,19 +112,19 @@ void *custom_realloc(void *ctx, void *ptr, size_t size) {
     custom_free(ctx, ptr);
     return NULL;
   }
-  stats.deallocate(objSizes[ptr]);
+  auto sz = objSizes.getSize(ptr);
+  stats.deallocate(sz);
   auto * new_ptr = origAlloc.realloc(ctx, ptr, size);
-  objSizes[new_ptr] = size;
+  objSizes.setSize(new_ptr, size);
   stats.allocate(size);
   return new_ptr;
 }
 
 // Custom free implementation
 void custom_free(void *ctx, void *ptr) {
-  auto sz = objSizes[ptr];
+  auto sz = objSizes.getSize(ptr);
   origAlloc.free(ctx, ptr);
   stats.deallocate(sz);
-    //    objSizes[ptr] = 0;
 }
 
 // Set the custom allocator
