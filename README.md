@@ -139,7 +139,8 @@ specified limits.
 
 ![limits](https://github.com/user-attachments/assets/6009c9a5-0e3e-449f-9a2d-88bc47ac462c)
 
-You can also specify only one or two of the limits instead of all three.
+You can also specify only one or two of the limits instead of all three.  This is perhaps
+less broadly applicable than bounds checking but may be useful in some contexts.
 
 ### Technical Details
 
@@ -170,4 +171,13 @@ python3 -m bigO.graph
 This command creates the file `bigO.pdf` that contains graphs like this:
 
 ![bigO](https://github.com/user-attachments/assets/8428180b-a454-4fc7-822c-7a130f9ba54e)
+
+### Caveats
+
+* `bigO` assumes all length functions are constant.  The instrumentation of nested tracked calls may add overhead 
+that effects the checking of hard limits, but nested tracked calls will not impact asymptotic bounds.
+
+* During A/B testing, no nesting tracked functions from within the two variants.  Doing so may impact the timing comparisions
+
+* Python's threading model is not amenable to precisely measuring concurrent calls.  `bigO` is not designed to handle threads.
 

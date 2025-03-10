@@ -5,6 +5,7 @@ import seaborn as sns
 import numpy as np
 import pandas as pd
 from statsmodels.nonparametric.smoothers_lowess import lowess
+from statsmodels.stats.multitest import multipletests
 import matplotlib.pyplot as plt
 
 from bigO.output import log
@@ -519,8 +520,18 @@ def define_segments(
 
 
 @dataclass
+class SegmentedABTestResult:
+    result: ABTestResult
+    adjusted_pvalue: float
+    null_rejected: bool
+
+    def __str__(self):
+        return f"{self.result.faster} is faster for {self.result.n_common.min():.3f} <= n <= {self.result.n_common.max():.3f} (p-value={self.result.p_value:.3f}, adj-p-value={self.adjusted_pvalue:.3f}, null_rejected={self.null_rejected})"
+
+
+@dataclass
 class SegmentedPermutationTestResult:
-    segments: List[ABTestResult]
+    segments: List[SegmentedABTestResult]
     warnings: List[str]
 
 
@@ -559,7 +570,7 @@ def segmented_permutation_test(
         log()
 
         # Initialize list to store results
-        results = []
+        results: List[ABTestResult] = []
 
         for idx, segment in enumerate(segments, 1):
             if segment[0] < segment[1]:
@@ -579,13 +590,29 @@ def segmented_permutation_test(
                     log(f"{result.faster} is faster (p-value={result.p_value:.3f})\n")
                     results += [result]
 
+        # Use Holm–Bonferroni instead to adjust for FDR.
+        # Note: Tests are not independent, as adjacent segments may be not
+        # be independent.
+        reject, adjusted_pvalues, _, _ = multipletests(
+            [x.p_value for x in results], alpha=0.05, method="holm"
+        )
+        full_results = []
+        for idx, result in enumerate(results):
+            full_results += [
+                SegmentedABTestResult(
+                    result=result,
+                    adjusted_pvalue=adjusted_pvalues[idx],
+                    null_rejected=reject[idx],
+                )
+            ]
+
         messages = [f"ab_test: {wm.message}" for wm in w]
         reported = []
         for message in messages:
             if message not in reported:
                 reported += [message]
 
-    return SegmentedPermutationTestResult(segments=results, warnings=reported)
+    return SegmentedPermutationTestResult(segments=full_results, warnings=reported)
 
 
 def plot_segmented_abtest_results(
