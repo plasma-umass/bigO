@@ -57,7 +57,7 @@ def linear_function_3(x, y):
 
 
 for i in range(75):
-    print("combine lists 3 -- should fail")
+    # print("combine lists 3 -- should fail")
     linear_function_3(
         list(np.random.rand(random.randint(100_000, 2_000_000))),
         list(range(random.randint(100_000, 200_000))),

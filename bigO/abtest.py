@@ -590,9 +590,9 @@ def segmented_permutation_test(
                     log(f"{result.faster} is faster (p-value={result.p_value:.3f})\n")
                     results += [result]
 
-        # Use Holm–Bonferroni instead to adjust for FDR.
+        # Use Holm–Bonferroni to adjust for FDR.
         # Note: Tests are not independent, as adjacent segments may be not
-        # be independent.
+        # be entirely independent.
         reject, adjusted_pvalues, _, _ = multipletests(
             [x.p_value for x in results], alpha=0.05, method="holm"
         )

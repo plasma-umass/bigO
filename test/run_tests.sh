@@ -13,6 +13,7 @@ test_files=(
 )
 
 for test_file in "${test_files[@]}"; do
+    echo "Running $test_file"
     python3 "$test_file"
 done
 

@@ -311,19 +311,22 @@ def check_bound(n: np.ndarray, y: np.ndarray, bound: Model) -> CheckBoundResult:
         columns=["model", "aic", "pvalue"],
     )
 
-    fitted_models = fitted_models.sort_values(by="pvalue", ascending=True)
-    fitted_models = fitted_models[fitted_models["aic"] < bound_model_fit.aic()]
-    fitted_models = fitted_models[~(fitted_models["model"] <= bound_model_fit)]
-
-    # Use Holm–Bonferroni instead to adjust for FDR.
+    # Multiple tests: Use Holm–Bonferroni to adjust for FDR.
     # Note: Tests are not independent.
+    fitted_models = fitted_models.sort_values(by="pvalue", ascending=True)
     reject, p_adjusted, _, _ = multipletests(
         fitted_models["pvalue"], alpha=0.05, method="holm"
     )
-    fitted_models = fitted_models.assign(p_adjusted=p_adjusted)
 
-    # Optionally, update fitted_models to only include models that passed the FDR test.
-    better_models = fitted_models[reject]
+    # Take only significantly different
+    fitted_models = fitted_models.assign(p_adjusted=p_adjusted)
+    fitted_models = fitted_models[reject]
+
+    # Take only those with lower AIC and worse than the specified bound model
+    fitted_models = fitted_models[fitted_models["aic"] < bound_model_fit.aic()]
+    fitted_models = fitted_models[~(fitted_models["model"] <= bound_model_fit)]
+
+    # sort by AIC
     better_models = better_models.sort_values(by="aic", ascending=True)
 
     return CheckBoundResult(bound_model_fit, better_models, warnings)

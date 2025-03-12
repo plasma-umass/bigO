@@ -34,5 +34,5 @@ def selection_sort(arr: np.ndarray) -> np.ndarray:
 
 
 for i in range(200):
-    print("sort me!")
+    # print("sort me!")
     selection_sort(np.random.rand(random.randint(1, 500)))

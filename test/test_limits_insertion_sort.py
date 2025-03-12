@@ -26,5 +26,5 @@ def insertion_sort(arr: np.ndarray) -> np.ndarray:
 
 
 for i in range(100):
-    print("sort me!")
+    # print("sort me!")
     insertion_sort(np.random.rand(random.randint(1, 2000)))
