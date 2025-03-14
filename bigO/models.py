@@ -322,13 +322,9 @@ def check_bound(n: np.ndarray, y: np.ndarray, bound: Model) -> CheckBoundResult:
     fitted_models = fitted_models.assign(p_adjusted=p_adjusted)
     fitted_models = fitted_models[reject]
 
-    print(fitted_models)
-
     # Take only those with lower AIC and worse than the specified bound model
     fitted_models = fitted_models[fitted_models["aic"] < bound_model_fit.aic()]
     fitted_models = fitted_models[~(fitted_models["model"] <= bound_model_fit)]
-
-    print(fitted_models)
 
     # sort by AIC
     better_models = fitted_models.sort_values(by="aic", ascending=True)
