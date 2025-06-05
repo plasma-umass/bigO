@@ -6,6 +6,7 @@ import pandas as pd
 from scipy.optimize import curve_fit
 
 from bigO.outliers import remove_outliers
+from statsmodels.stats.multitest import multipletests
 
 
 system_name = "bigO"
@@ -310,10 +311,23 @@ def check_bound(n: np.ndarray, y: np.ndarray, bound: Model) -> CheckBoundResult:
         columns=["model", "aic", "pvalue"],
     )
 
-    fitted_models = fitted_models.sort_values(by="aic", ascending=True)
+    # Multiple tests: Use Holm–Bonferroni to adjust for FDR.
+    # Note: Tests are not independent.
+    fitted_models = fitted_models.sort_values(by="pvalue", ascending=True)
+    reject, p_adjusted, _, _ = multipletests(
+        fitted_models["pvalue"], alpha=0.05, method="holm"
+    )
+
+    # Take only significantly different
+    fitted_models = fitted_models.assign(p_adjusted=p_adjusted)
+    fitted_models = fitted_models[reject]
+
+    # Take only those with lower AIC and worse than the specified bound model
     fitted_models = fitted_models[fitted_models["aic"] < bound_model_fit.aic()]
     fitted_models = fitted_models[~(fitted_models["model"] <= bound_model_fit)]
-    better_models = fitted_models[fitted_models["pvalue"] < 0.05]
+
+    # sort by AIC
+    better_models = fitted_models.sort_values(by="aic", ascending=True)
 
     return CheckBoundResult(bound_model_fit, better_models, warnings)
 

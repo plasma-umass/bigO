@@ -8,7 +8,14 @@ from typing import List, Optional
 from matplotlib import gridspec, pyplot as plt
 from matplotlib.figure import Figure
 
-from bigO.analysis import ABTest, Analysis, CheckBounds, CheckLimits, FunctionData, InferPerformance
+from bigO.analysis import (
+    ABTest,
+    Analysis,
+    CheckBounds,
+    CheckLimits,
+    FunctionData,
+    InferPerformance,
+)
 from bigO.output import log, timer, set_debug
 import click
 import numpy as np

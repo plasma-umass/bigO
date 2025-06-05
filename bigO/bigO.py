@@ -204,7 +204,7 @@ def track(length_function: Callable[..., int]) -> Callable:
                         "memory": peak,  # Peak memory usage in bytes
                         "nobjects": nobjects,
                     }
-                    _performance_data[full_name]["observations"].append(perf_data)
+                    _get_performance_data(full_name)["observations"].append(perf_data)
             return result
 
         wrapper.__is_tracked__ = True  # type: ignore[attr-defined]

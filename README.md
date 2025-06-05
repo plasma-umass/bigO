@@ -139,7 +139,8 @@ specified limits.
 
 ![limits](https://github.com/user-attachments/assets/6009c9a5-0e3e-449f-9a2d-88bc47ac462c)
 
-You can also specify only one or two of the limits instead of all three.
+You can also specify only one or two of the limits instead of all three.  This is perhaps
+less broadly applicable than bounds checking but may be useful in some contexts.
 
 ### Technical Details
 
@@ -157,7 +158,7 @@ In addition, `bigO` uses a more general curve fitting approach that can handle
 complexity classes that do not follow the power law, and it uses
 the [AIC](https://en.wikipedia.org/wiki/Akaike_information_criterion) to
 select the best model.  Further, `bigO` measures the statistical significance of its complexity inference
-results via p-values computed by the technique outlined in [An Empirical Investigation of Statistical Significance in NLP"](https://aclanthology.org/D12-1091.pdf) by Berg-Kirkpatrick, Burkett, and Klein, Joint Conference on Empirical Methods in Natural Language Processing and Computational Natural 2012.
+results via p-values computed by the technique outlined in [An Empirical Investigation of Statistical Significance in NLP](https://aclanthology.org/D12-1091.pdf) by Berg-Kirkpatrick, Burkett, and Klein, 2012 Joint Conference on Empirical Methods in Natural Language Processing and Computational Natural Language Learning, pages 995–1005.
 
 For A/B testing, `bigO` smooths the performance curves for the two functions, segments the input range by approximating crossover points for those curves, and then performs a standard permutation test to determine whether the different in performance between the function across that range is statistically significant. The test statistic is the area between the two curves, as approximated by numerical integration via the trapezoid rule.
 
@@ -170,4 +171,13 @@ python3 -m bigO.graph
 This command creates the file `bigO.pdf` that contains graphs like this:
 
 ![bigO](https://github.com/user-attachments/assets/8428180b-a454-4fc7-822c-7a130f9ba54e)
+
+### Caveats
+
+* `bigO` assumes all length functions are constant.  The instrumentation of nested tracked calls may add overhead 
+that effects the checking of hard limits, but nested tracked calls will not impact asymptotic bounds.
+
+* During A/B testing, no nesting tracked functions from within the two variants.  Doing so may impact the timing comparisions
+
+* Python's threading model is not amenable to precisely measuring concurrent calls.  `bigO` is not designed to handle threads.
 

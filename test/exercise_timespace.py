@@ -27,19 +27,19 @@ i = 1
 
 class Test:
     def __init__(self):
-        print("foo ON")
+        # print("foo ON")
         global i
         self.foo = (
             11111111111111111111111111111111111111111111111111111111111111111111111111111111111
             + i
         )
         i += 1
-        print("foo OFF")
+        # print("foo OFF")
 
 
 @bigO.track(lambda n, **kwargs: n)
 def linear_function(n, multiplier=2):
-    print("linear_function")
+    # print("linear_function")
     q = [Test() for i in range(1_000)]
     return
     return [multiply(square(x), multiplier) for x in range(n)]
@@ -59,7 +59,7 @@ def nlogn_function(x):
 
 @bigO.track(lambda n: n)
 def quadratic_function(n):
-    print(f"quadratic function {n=}")
+    # print(f"quadratic function {n=}")
     x = 0.0
     for i in range(n):
         for j in range(n):
@@ -70,7 +70,7 @@ def quadratic_function(n):
 
 # Example function calls
 for i in range(10):
-    print("example functions.")
+    # print("example functions.")
     linear_function(10)
     # linear_function(random.randint(1,1_000_000))
 
@@ -79,18 +79,18 @@ import sys
 sys.exit(0)
 
 for i in range(10):
-    print("do something.")
+    # print("do something.")
     quadratic_function(10)  #  * random.randint(1, 10))
 
 for i in range(10):
-    print("do something.")
+    # print("do something.")
     quadratic_function(10 * random.randint(1, 10))
 for i in range(10):
-    print("combine lists")
+    # print("combine lists")
     linear_function_2(
         list(range(random.randint(100_000, 200_000))),
         list(range(random.randint(100_000, 200_000))),
     )
 for i in range(10):
-    print("sort me")
+    # print("sort me")
     nlogn_function(list(np.random.rand(random.randint(100_000, 1_000_000))))

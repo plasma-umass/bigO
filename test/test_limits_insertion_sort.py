@@ -6,10 +6,7 @@ from bigO.bigO import limits
 import numpy as np
 
 
-@limits(len, 
-        time=0.1, 
-        mem=1_000_000, 
-        length=1800)
+@limits(len, time=0.1, mem=1_000_000, length=1800)
 def insertion_sort(arr: np.ndarray) -> np.ndarray:
     sorted_arr = arr.copy()
     n = sorted_arr.shape[0]
@@ -26,5 +23,5 @@ def insertion_sort(arr: np.ndarray) -> np.ndarray:
 
 
 for i in range(100):
-    print("sort me!")
+    # print("sort me!")
     insertion_sort(np.random.rand(random.randint(1, 2000)))

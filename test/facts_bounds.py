@@ -9,11 +9,9 @@ def fact(x: int) -> int:
     return v
 
 
-@bigO.bounds(lambda xs: len(xs),
-             time="O(n*log(n))",
-             mem="O(n)")
+@bigO.bounds(lambda xs: len(xs), time="O(n*log(n))", mem="O(n)")
 def factorialize(xs: list[int]) -> list[int]:
-    xs = xs + xs[0:random.randint(0,len(xs))]
+    xs = xs + xs[0 : random.randint(0, len(xs))]
     new_list = [fact(x) for x in xs]
     return new_list
 

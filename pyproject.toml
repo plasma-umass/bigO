@@ -1,6 +1,6 @@
 [project]
 name = "bigO"
-version = "0.0.4"
+version = "0.0.5"
 description = "Track asymptotic complexity in time and space."
 readme = "README.md"
 keywords = ["performance", "profiler"]
