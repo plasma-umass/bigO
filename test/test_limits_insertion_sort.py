@@ -3,7 +3,6 @@ import numpy as np
 
 from bigO.bigO import limits
 
-import numpy as np
 
 
 @limits(len, time=0.1, mem=1_000_000, length=1800)

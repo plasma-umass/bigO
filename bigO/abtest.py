@@ -564,7 +564,7 @@ def segmented_permutation_test(
         log(f"Detected Crossover Points at n = {crossover_n}\n")
 
         segments = define_segments(n_common, crossover_n)
-        log(f"Defined Segments:")
+        log("Defined Segments:")
         for idx, segment in enumerate(segments, 1):
             log(f"Segment {idx}: n = {segment[0]:.2f} to n = {segment[1]:.2f}")
         log()
