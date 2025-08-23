@@ -4,7 +4,6 @@ import time
 import traceback
 
 import termcolor
-from termcolor._types import Color
 import threading
 
 
@@ -31,7 +30,7 @@ class Output(threading.local):
             self,
             outer,
             message,
-            color: Color = "cyan",
+            color = "cyan",
             start="",
             end="",
         ):
