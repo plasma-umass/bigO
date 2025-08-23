@@ -1,7 +1,5 @@
 import click
 import json
-import math
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns

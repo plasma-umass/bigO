@@ -1,6 +1,5 @@
 import abc
 from dataclasses import dataclass
-from tkinter import font
 from typing import List
 
 from matplotlib import pyplot as plt
@@ -167,7 +166,7 @@ class CheckBounds(Analysis):
             ]
             details += [
                 f"Declared Time Bound for {self.function_data.function_name} is {self.time_bound}, ",
-                f"but these models with worse performance better fit the data: ",
+                "but these models with worse performance better fit the data: ",
                 str(self.time_check.better_models.to_string(index=False)),
             ]
         if self.mem_check and len(self.mem_check.better_models) > 0:
@@ -177,7 +176,7 @@ class CheckBounds(Analysis):
             ]
             details += [
                 f"Declared Memory Bound for {self.function_data.function_name}: {self.mem_bound}, ",
-                f"but these models with worse performance better fit the data: ",
+                "but these models with worse performance better fit the data: ",
                 str(
                     self.mem_check.better_models[["model", "pvalue"]].to_string(
                         index=False
