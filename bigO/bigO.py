@@ -517,8 +517,9 @@ def assert_bounds(
     clear_performance_data()
 
     # Create a tracked version of the function
-    @wraps(func)
+    # Note: @wraps must come after @track so that @track sees the correct function name
     @track(length_function)
+    @wraps(func)
     def tracked_func(*args, **kwargs):
         return func(*args, **kwargs)
 
