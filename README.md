@@ -142,6 +142,43 @@ specified limits.
 You can also specify only one or two of the limits instead of all three.  This is perhaps
 less broadly applicable than bounds checking but may be useful in some contexts.
 
+#### Using bigO in Unit Tests
+
+`bigO` provides utilities for testing complexity bounds in unit tests without writing JSON files or polluting global state between tests:
+
+```python
+from bigO import assert_bounds, no_persistence, BigOError
+
+def find_intersection(a: list, b: list) -> list:
+    return list(set(a).intersection(set(b)))
+
+def test_find_intersection_is_linear():
+    # Create inputs of varying sizes
+    inputs = [
+        (list(range(i)), list(range(i // 2, i + i // 2)))
+        for i in range(100, 1001, 100)
+    ]
+
+    # Use context manager to prevent JSON file creation
+    with no_persistence():
+        # Raises BigOError if complexity exceeds O(n)
+        assert_bounds(
+            find_intersection,
+            lambda a, b: len(a) + len(b),
+            inputs,
+            time="O(n)",
+        )
+```
+
+The `assert_bounds()` function automatically:
+- Clears any previous performance data to ensure test isolation
+- Tracks the function across all provided inputs
+- Checks bounds and raises `BigOError` if violated
+
+Additional utilities:
+- `disable_persistence()` / `enable_persistence()` - Manual control over JSON file writing
+- `clear_performance_data()` - Explicitly reset global state between tests
+
 ### Technical Details
 
 #### Curve-fitting
