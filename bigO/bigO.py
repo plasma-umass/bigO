@@ -535,8 +535,9 @@ def assert_bounds(
     _performance_data[full_name]["tests"] = tests
 
     # Run the function on all inputs
+    # Each input can be a tuple/list of args to unpack, or a single argument
     for input_data in inputs:
-        if isinstance(input_data, tuple):
+        if isinstance(input_data, (tuple, list)):
             tracked_func(*input_data)
         else:
             tracked_func(input_data)
