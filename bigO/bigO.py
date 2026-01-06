@@ -7,8 +7,9 @@ import time
 import marshal
 
 from collections import defaultdict
+from contextlib import contextmanager
 from functools import wraps
-from typing import Any, Callable, List, Literal, TypedDict
+from typing import Any, Callable, Generator, List, Literal, TypedDict
 
 import numpy as np
 
@@ -49,6 +50,9 @@ _performance_data_filename = f"{system_name}_data.json"
 # Hashes of function implementations, used to discard outdated perf info for modified functions
 _hash_function_values: dict[str, Any] = {}
 
+# Flag to control whether data is saved to disk on exit
+_save_on_exit: bool = True
+
 # python_version = (sys.version_info[0], sys.version_info[1])
 # # Disabled for now
 # use_sys_monitoring = False
@@ -74,6 +78,54 @@ def set_performance_data_filename(fname: str) -> str:
     except FileNotFoundError:
         _performance_data = dict()
     return old_performance_data_filename
+
+
+def disable_persistence() -> None:
+    """Disables saving performance data to disk on exit.
+
+    Useful for unit tests where you don't want to write JSON files.
+    """
+    global _save_on_exit
+    _save_on_exit = False
+
+
+def enable_persistence() -> None:
+    """Re-enables saving performance data to disk on exit."""
+    global _save_on_exit
+    _save_on_exit = True
+
+
+@contextmanager
+def no_persistence() -> Generator[None, None, None]:
+    """Context manager that temporarily disables persistence.
+
+    Automatically re-enables persistence when the context exits,
+    even if an exception occurs.
+
+    Example:
+        with no_persistence():
+            # Run tests without writing JSON files
+            assert_bounds(my_func, len, inputs, time="O(n)")
+        # Persistence is automatically re-enabled here
+    """
+    global _save_on_exit
+    previous_state = _save_on_exit
+    _save_on_exit = False
+    try:
+        yield
+    finally:
+        _save_on_exit = previous_state
+
+
+def clear_performance_data() -> None:
+    """Clears all in-memory performance data and hash values.
+
+    Useful for unit tests to ensure isolation between test cases.
+    """
+    global _performance_data
+    global _hash_function_values
+    _performance_data = defaultdict(lambda: RuntimeData(tests={}, observations=[]))
+    _hash_function_values = {}
 
 
 def _get_performance_data(key):
@@ -437,11 +489,94 @@ def ab_test(
     return decorator
 
 
+def assert_bounds(
+    func: Callable,
+    length_function: Callable[..., int],
+    inputs: List[Any],
+    time: str | None = None,
+    mem: str | None = None,
+) -> None:
+    """
+    Assert that a function meets specified time and/or memory complexity bounds.
+
+    This is a utility function for unit testing that handles all the boilerplate
+    of tracking performance, checking bounds, and cleaning up. It clears any
+    existing performance data before running tests to ensure isolation and does
+    not itself write any data to disk.
+
+    Args:
+        func: The function to test.
+        length_function: A function that calculates the "length" (n) of the input.
+        inputs: A list of inputs to pass to the function. Each input should be
+                a tuple of positional arguments or a single argument.
+        time: Expected time complexity bound (e.g., "O(n)", "O(n*log(n))").
+        mem: Expected memory complexity bound (e.g., "O(n)", "O(1)").
+
+    Raises:
+        BigOError: If the function's performance does not meet the specified bounds.
+        ValueError: If neither time nor mem bounds are specified.
+
+    Example:
+        def find_intersection_linear(a: list, b: list) -> list:
+            return list(set(a).intersection(set(b)))
+
+        inputs = [
+            ([1,2,3], [2,3,4]),
+            (list(range(100)), list(range(50, 150))),
+            (list(range(1000)), list(range(500, 1500))),
+        ]
+
+        assert_bounds(
+            find_intersection_linear,
+            lambda a, b: len(a) + len(b),
+            inputs,
+            time="O(n)",
+        )
+    """
+    if time is None and mem is None:
+        raise ValueError("At least one of 'time' or 'mem' bounds must be specified")
+
+    # Clear any existing data to ensure isolation
+    clear_performance_data()
+
+    # Create a tracked version of the function
+    # Note: @wraps must come after @track so that @track sees the correct function name
+    @track(length_function)
+    @wraps(func)
+    def tracked_func(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    # Record what we're testing for
+    full_name = _function_full_name(tracked_func)
+    original_full_name = _function_full_name(func)
+    tests = {}
+    if time:
+        tests["time_bound"] = time
+    if mem:
+        tests["mem_bound"] = mem
+    _performance_data[full_name]["original_function"] = original_full_name
+    _performance_data[full_name]["tests"] = tests
+
+    # Run the function on all inputs
+    # Each input can be a tuple/list of args to unpack, or a single argument
+    for input_data in inputs:
+        if isinstance(input_data, (tuple, list)):
+            tracked_func(*input_data)
+        else:
+            tracked_func(input_data)
+
+    # Check the bounds
+    _raise_on_failure(check(tracked_func))
+
+
 @atexit.register
 def save_performance_data() -> None:
     """
     Saves the collected performance data to a JSON file at program exit.
     """
+    global _save_on_exit
+    if not _save_on_exit:
+        return
 
     # Load any saved data into a dictionary.
     global _performance_data_filename
