@@ -517,17 +517,20 @@ def assert_bounds(
     clear_performance_data()
 
     # Create a tracked version of the function
+    @wraps(func)
     @track(length_function)
     def tracked_func(*args, **kwargs):
         return func(*args, **kwargs)
 
     # Record what we're testing for
     full_name = _function_full_name(tracked_func)
+    original_full_name = _function_full_name(func)
     tests = {}
     if time:
         tests["time_bound"] = time
     if mem:
         tests["mem_bound"] = mem
+    _performance_data[full_name]["original_function"] = original_full_name
     _performance_data[full_name]["tests"] = tests
 
     # Run the function on all inputs
