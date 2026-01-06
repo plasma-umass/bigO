@@ -5,7 +5,7 @@ This demonstrates the fix for https://github.com/plasma-umass/bigO/issues/16
 """
 import os
 import bigO
-from bigO import assert_bounds, disable_persistence, clear_performance_data, BigOError
+from bigO import assert_bounds, disable_persistence, enable_persistence, no_persistence, clear_performance_data, BigOError
 
 
 def find_intersection_quadratic(a: list, b: list) -> list:
@@ -132,6 +132,36 @@ def test_no_json_file_written():
         print("ERROR: JSON file was written despite disable_persistence()")
 
 
+def test_no_persistence_context_manager():
+    """Test that no_persistence() context manager works correctly."""
+    # Ensure persistence is enabled initially
+    enable_persistence()
+
+    json_file = "bigO_data.json"
+    if os.path.exists(json_file):
+        os.remove(json_file)
+
+    data = list(range(1_000))
+    inputs = [(data[:i], data[1:i+1]) for i in range(100, 1_001, 100)]
+
+    def input_length(a, b):
+        return len(a) + len(b)
+
+    with no_persistence():
+        assert_bounds(
+            find_intersection_linear,
+            input_length,
+            inputs,
+            time="O(n)",
+        )
+
+    # File should not exist
+    if not os.path.exists(json_file):
+        print("Context manager correctly prevented JSON file writing")
+    else:
+        print("ERROR: JSON file was written inside no_persistence() context")
+
+
 if __name__ == "__main__":
     print("=" * 60)
     print("Testing bigO unit testing utilities")
@@ -156,6 +186,11 @@ if __name__ == "__main__":
     print("Test 4: No JSON file with disable_persistence()")
     print("-" * 40)
     test_no_json_file_written()
+    print()
+
+    print("Test 5: no_persistence() context manager")
+    print("-" * 40)
+    test_no_persistence_context_manager()
     print()
 
     print("=" * 60)

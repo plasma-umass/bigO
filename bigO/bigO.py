@@ -7,8 +7,9 @@ import time
 import marshal
 
 from collections import defaultdict
+from contextlib import contextmanager
 from functools import wraps
-from typing import Any, Callable, List, Literal, TypedDict
+from typing import Any, Callable, Generator, List, Literal, TypedDict
 
 import numpy as np
 
@@ -92,6 +93,28 @@ def enable_persistence() -> None:
     """Re-enables saving performance data to disk on exit."""
     global _save_on_exit
     _save_on_exit = True
+
+
+@contextmanager
+def no_persistence() -> Generator[None, None, None]:
+    """Context manager that temporarily disables persistence.
+
+    Automatically re-enables persistence when the context exits,
+    even if an exception occurs.
+
+    Example:
+        with no_persistence():
+            # Run tests without writing JSON files
+            assert_bounds(my_func, len, inputs, time="O(n)")
+        # Persistence is automatically re-enabled here
+    """
+    global _save_on_exit
+    previous_state = _save_on_exit
+    _save_on_exit = False
+    try:
+        yield
+    finally:
+        _save_on_exit = previous_state
 
 
 def clear_performance_data() -> None:
