@@ -477,8 +477,9 @@ def assert_bounds(
     Assert that a function meets specified time and/or memory complexity bounds.
 
     This is a utility function for unit testing that handles all the boilerplate
-    of tracking performance, checking bounds, and cleaning up. It does not write
-    any data to disk.
+    of tracking performance, checking bounds, and cleaning up. It clears any
+    existing performance data before running tests to ensure isolation and does
+    not itself write any data to disk.
 
     Args:
         func: The function to test.
